@@ -10,7 +10,7 @@ from pyrogram import enums
 from pyrogram.errors import *
 from typing import Union
 from Script import script
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List
 from database.users_chats_db import db
 from database.join_reqs import JoinReqs
@@ -572,31 +572,52 @@ async def get_token(bot, userid, link):
 
 async def verify_user(bot, userid, token):
     user = await bot.get_users(userid)
+    
+    # Check if user exists in the database
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
-        await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
+        await bot.send_message(
+            LOG_CHANNEL, 
+            script.LOG_TEXT_P.format(user.id, user.mention)
+        )
+    
+    # Mark token as used
     TOKENS[user.id] = {token: True}
+    
+    # Store current timestamp in 'Asia/Kolkata' timezone
     tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
-    VERIFIED[user.id] = str(today)
+    now = datetime.now(tz)  # Get current time
+    VERIFIED[user.id] = now.strftime('%Y-%m-%d %H:%M:%S')  # Save timestamp as string
 
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
+    
+    # Check if user exists in the database
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
-        await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
+        await bot.send_message(
+            LOG_CHANNEL, 
+            script.LOG_TEXT_P.format(user.id, user.mention)
+        )
+    
+    # Verify if the user is already verified
     if user.id in VERIFIED.keys():
-        EXP = VERIFIED[user.id]
-        years, month, day = EXP.split('-')
-        comp = date(int(years), int(month), int(day))
-        if comp<today:
-            return False
+        tz = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(tz)  # Get current time
+        last_verified_str = VERIFIED[user.id]
+        
+        # Convert the stored string back to a datetime object
+        last_verified = datetime.strptime(last_verified_str, '%Y-%m-%d %H:%M:%S')
+        
+        # Calculate the time difference
+        time_difference = now - last_verified
+        if time_difference < timedelta(hours=24):  # Check if less than 24 hours
+            return True  # Verification is still valid
         else:
-            return True
+            return False  # Verification expired
     else:
-        return False  
+        return False  # User not verified yet
+
     
 async def send_all(bot, userid, files, ident, chat_id, user_name, query):
     settings = await get_settings(chat_id)
