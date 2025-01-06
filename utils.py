@@ -1,8 +1,4 @@
-# Don't Remove Credit @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot @Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-
-import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client, base64
+import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client
 from info import *
 from imdb import Cinemagoer 
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
@@ -538,30 +534,22 @@ async def get_verify_shorted_link(link, url, api):
         shortzy = Shortzy(api_key=API, base_site=URL)
         link = await shortzy.convert(link)
         return link
-
-def decode_base64(data):
-    try:
-        print(f"Debug: Decoding Base64 string - {data}")  # Debugging input
-        padded_data = data + "=" * (-len(data) % 4)  # Ensure proper padding
-        decoded_data = base64.urlsafe_b64decode(padded_data).decode("ascii")
-        print(f"Debug: Successfully decoded Base64 - {decoded_data}")
-        return decoded_data
-    except (base64.binascii.Error, UnicodeDecodeError) as e:
-        print(f"Base64 decoding error: {e}")  # Log error
-        return None  # Return None on failure
-
+        
 async def check_token(bot, userid, token):
     user = await bot.get_users(userid)
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
-    
     if user.id in TOKENS.keys():
         TKN = TOKENS[user.id]
         if token in TKN.keys():
             is_used = TKN[token]
-            return not is_used  # Return True if not used, False if used
-    return False
+            if is_used == True:
+                return False
+            else:
+                return True
+    else:
+        return False
 
 async def get_token(bot, userid, link):
     user = await bot.get_users(userid)
@@ -580,52 +568,33 @@ async def get_token(bot, userid, link):
 
 async def verify_user(bot, userid, token):
     user = await bot.get_users(userid)
-    
-    # Check if user exists in the database
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
-        await bot.send_message(
-            LOG_CHANNEL, 
-            script.LOG_TEXT_P.format(user.id, user.mention)
-        )
-    
-    # Mark token as used
+        await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
     TOKENS[user.id] = {token: True}
-    
-    # Store current timestamp in 'Asia/Kolkata' timezone
     tz = pytz.timezone('Asia/Kolkata')
-    now = datetime.now(tz)  # Get current time
-    VERIFIED[user.id] = now.strftime('%Y-%m-%d %H:%M:%S')  # Save timestamp as string
+    now = datetime.now(tz)  # Store the current timestamp
+    VERIFIED[user.id] = now.strftime('%Y-%m-%d %H:%M:%S')
 
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
-    
-    # Check if user exists in the database
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
-        await bot.send_message(
-            LOG_CHANNEL, 
-            script.LOG_TEXT_P.format(user.id, user.mention)
-        )
-    
-    # Verify if the user is already verified
+        await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
+    tz = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(tz)  # Current timestamp
     if user.id in VERIFIED.keys():
-        tz = pytz.timezone('Asia/Kolkata')  # Define timezone
-        now = datetime.now(tz)  # Current time (aware)
         last_verified_str = VERIFIED[user.id]
-        
-        # Convert stored string to a timezone-aware datetime object
-        last_verified = tz.localize(datetime.strptime(last_verified_str, '%Y-%m-%d %H:%M:%S'))
-        
-        # Calculate the time difference
-        time_difference = now - last_verified
-        if time_difference < timedelta(hours=24):  # Check if less than 24 hours
-            return True  # Verification is still valid
+        # Convert stored timestamp back to datetime object
+        last_verified = datetime.strptime(last_verified_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=tz)
+        # Check if the time difference is within 24 hours
+        if now - last_verified < timedelta(hours=24):
+            return True  # Verification is valid
         else:
             return False  # Verification expired
     else:
         return False  # User not verified yet
-
+  
     
 async def send_all(bot, userid, files, ident, chat_id, user_name, query):
     settings = await get_settings(chat_id)
