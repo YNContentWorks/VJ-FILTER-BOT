@@ -538,22 +538,30 @@ async def get_verify_shorted_link(link, url, api):
         shortzy = Shortzy(api_key=API, base_site=URL)
         link = await shortzy.convert(link)
         return link
-        
+
+def decode_base64(data):
+    try:
+        print(f"Debug: Decoding Base64 string - {data}")  # Debugging input
+        padded_data = data + "=" * (-len(data) % 4)  # Ensure proper padding
+        decoded_data = base64.urlsafe_b64decode(padded_data).decode("ascii")
+        print(f"Debug: Successfully decoded Base64 - {decoded_data}")
+        return decoded_data
+    except (base64.binascii.Error, UnicodeDecodeError) as e:
+        print(f"Base64 decoding error: {e}")  # Log error
+        return None  # Return None on failure
+
 async def check_token(bot, userid, token):
     user = await bot.get_users(userid)
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
+    
     if user.id in TOKENS.keys():
         TKN = TOKENS[user.id]
         if token in TKN.keys():
             is_used = TKN[token]
-            if is_used == True:
-                return False
-            else:
-                return True
-    else:
-        return False
+            return not is_used  # Return True if not used, False if used
+    return False
 
 async def get_token(bot, userid, link):
     user = await bot.get_users(userid)
@@ -588,12 +596,6 @@ async def verify_user(bot, userid, token):
     tz = pytz.timezone('Asia/Kolkata')
     now = datetime.now(tz)  # Get current time
     VERIFIED[user.id] = now.strftime('%Y-%m-%d %H:%M:%S')  # Save timestamp as string
-
-def decode_base64(data):
-    try:
-        return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode("ascii")
-    except (base64.binascii.Error, UnicodeDecodeError) as e:
-        raise ValueError("Invalid Base64-encoded string") from e
 
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
