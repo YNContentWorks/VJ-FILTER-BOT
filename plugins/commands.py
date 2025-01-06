@@ -1,7 +1,3 @@
-# Don't Remove Credit @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot @Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-
 import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64
 from Script import script
 from pyrogram import Client, filters, enums
@@ -15,6 +11,18 @@ from utils import get_settings, pub_is_subscribed, get_size, is_subscribed, save
 from database.connections_mdb import active_connection
 from urllib.parse import quote_plus
 from TechVJ.util.file_properties import get_name, get_hash, get_media_file_size
+
+def safe_base64_decode(encoded_string):
+    try:
+        # Add padding to make the string's length a multiple of 4
+        padded_string = encoded_string + "=" * (-len(encoded_string) % 4)
+        # Decode the Base64 string
+        decoded_bytes = base64.urlsafe_b64decode(padded_string)
+        return decoded_bytes.decode("ascii")
+    except (base64.binascii.Error, UnicodeDecodeError) as e:
+        print(f"Base64 decoding error: {e}")  # Log the error
+        return None  # Return None if decoding fails
+
 logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
@@ -591,7 +599,16 @@ async def start(client, message):
     user = message.from_user.id
     files_ = await get_file_details(file_id)           
     if not files_:
-        pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
+        decoded_data = safe_base64_decode(data)  # Use the safe decoding function
+        if not decoded_data:
+            print("Invalid Base64-encoded data. Skipping further processing.")
+            return  # Exit the function if decoding fails
+        try:
+            pre, file_id = decoded_data.split("_", 1)  # Split the decoded string into pre and file_id
+        except ValueError:
+            print("Invalid decoded data format. Expected format: 'pre_file_id'.")
+            return  # Handle cases where the decoded string format is incorrect
+
         try:
             if not await db.has_premium_access(message.from_user.id):
                 if not await check_verification(client, message.from_user.id) and VERIFY == True:
