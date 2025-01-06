@@ -2,7 +2,7 @@
 # Subscribe YouTube Channel For Amazing Bot @Tech_VJ
 # Ask Doubt on telegram @KingVJ01
 
-import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client
+import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client, base64
 from info import *
 from imdb import Cinemagoer 
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
@@ -589,6 +589,12 @@ async def verify_user(bot, userid, token):
     now = datetime.now(tz)  # Get current time
     VERIFIED[user.id] = now.strftime('%Y-%m-%d %H:%M:%S')  # Save timestamp as string
 
+def decode_base64(data):
+    try:
+        return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode("ascii")
+    except (base64.binascii.Error, UnicodeDecodeError) as e:
+        raise ValueError("Invalid Base64-encoded string") from e
+
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
     
@@ -602,12 +608,12 @@ async def check_verification(bot, userid):
     
     # Verify if the user is already verified
     if user.id in VERIFIED.keys():
-        tz = pytz.timezone('Asia/Kolkata')
-        now = datetime.now(tz)  # Get current time
+        tz = pytz.timezone('Asia/Kolkata')  # Define timezone
+        now = datetime.now(tz)  # Current time (aware)
         last_verified_str = VERIFIED[user.id]
         
-        # Convert the stored string back to a datetime object
-        last_verified = datetime.strptime(last_verified_str, '%Y-%m-%d %H:%M:%S')
+        # Convert stored string to a timezone-aware datetime object
+        last_verified = tz.localize(datetime.strptime(last_verified_str, '%Y-%m-%d %H:%M:%S'))
         
         # Calculate the time difference
         time_difference = now - last_verified
