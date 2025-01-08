@@ -85,7 +85,7 @@ PUBLIC_FILE_CHANNEL = environ.get('PUBLIC_FILE_CHANNEL', '') # Public Channel Us
 # Links
 GRP_LNK = environ.get('GRP_LNK', 'https://t.me/+wBHUraUfm69hN2Rl')
 CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/+Bwsxcnql4eBiN2Fl')
-SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'https://t.me/+48fSugCipKhiNWI1') # Support Chat Link Without https:// or @
+SUPPORT_CHAT = environ.get('SUPPORT_CHAT', '+48fSugCipKhiNWI1') # Support Chat Link Without https:// or @
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/NYASHS2727')
 
 # True Or False
@@ -173,7 +173,7 @@ AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', False)) # Set True or 
 
 
 # Start Command Reactions
-REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] #don't add any emoji because tg not support all emoji reactions
+REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🥰", "🤩", "😘", "👏", "😛", "🎉", "⚡️", "😎", "🏆", "🔥", "🆒"] #don't add any emoji because tg not support all emoji reactions
 
 
 if MULTIPLE_DATABASE == False:
